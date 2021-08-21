@@ -2,10 +2,11 @@
 
 import subprocess   #module to run system commands
 import optparse     #module to handle system commands in a line
+import re # module for regex
 
 
 def change_mac(interface, new_mac):
-    print("[+] Changing the MAC Address of " + interface + "to " + new_mac)
+    print("[+] Changing the MAC Address of " + interface + " to " + new_mac)
 
     subprocess.call("ifconfig " + interface + " down", shell=True)
     subprocess.call("ifconfig " + interface + " hw ether " + new_mac, shell=True)
@@ -26,7 +27,38 @@ def get_arguments():
         parser.error("[-] Please specify a new_mac, use --help for more info")
     return options
 
+def get_current_mac(interface):
+    # to check the result
+    ifconfig_result = subprocess.check_output(["ifconfig", interface])
 
-#Calling both the functions
+    # algorithm step 2
+    mac_address_search_result = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", ifconfig_result)
+
+    if mac_address_search_result:
+        return mac_address_search_result.group(0)
+    else:
+        print("[-] Could not read mac address")
+        
+        
+        
+       
+# main Execution
+
 options = get_arguments()
+
+current_mac = get_current_mac(options.interface)
+print('Current MAC = ' + str(current_mac))  # we have casted it to a string as sometimes current mac can
+                                          # hold the value none and for that we have to tell that treat it as
+                                          # a string otherwise it will throw an error
+
 change_mac(options.interface, options.new_mac)
+
+current_mac = get_current_mac(options.interface)
+if current_mac == options.new_mac:
+    print("[+] MAC Address changed sucessfully to "+ options.new_mac)
+else:
+    print("[-] MAC Address did not changed")
+
+
+
+
